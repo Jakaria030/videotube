@@ -13,11 +13,11 @@ const uploadOnCloudinary = async (localFilePath) => {
 
     // upload the file on cloudinary
     const response = await cloudinary.uploader.upload(localFilePath, {
+      folder: "videotube",
       resource_type: "auto",
     });
 
-    console.log("File is upload on cloudinary: ", response);
-
+    fs.unlinkSync(localFilePath);
     return response;
   } catch (error) {
     fs.unlinkSync(localFilePath);
@@ -25,4 +25,4 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-export default uploadOnCloudinary;
+export { uploadOnCloudinary };
