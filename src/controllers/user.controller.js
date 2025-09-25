@@ -5,7 +5,7 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { destoryFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -257,6 +257,8 @@ const updatedUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Error while uploading on avatar");
   }
 
+  await destoryFromCloudinary(req.user.avatar);
+
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
@@ -283,6 +285,10 @@ const updatedUserCoverImage = asyncHandler(async (req, res) => {
 
   if (!coverImage.url) {
     throw new ApiError(400, "Error while uploading on cover image");
+  }
+
+  if(req.user?.coverImage){
+    await destoryFromCloudinary(req.user.coverImage);
   }
 
   const user = await User.findByIdAndUpdate(
