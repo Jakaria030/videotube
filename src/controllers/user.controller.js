@@ -142,22 +142,6 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
-const logoutUser = asyncHandler(async (req, res) => {
-  await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      $set: { refreshToken: undefined },
-    },
-    { new: true }
-  );
-
-  return res
-    .status(200)
-    .clearCookie("accessToken", cookiesOption)
-    .clearCookie("refreshToken", cookiesOption)
-    .json(new ApiResponse(200, {}, "User logged Out"));
-});
-
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
@@ -182,8 +166,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       throw new ApiError(401, "Refresh token is expired or used");
     }
 
-    const { accessToken, refreshToken } =
-      await generateAccessAndRefreshTokens();
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+      user?._id
+    );
 
     return res
       .status(200)
@@ -193,6 +178,22 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   } catch (error) {
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $unset: { refreshToken: 1 },
+    },
+    { new: true }
+  );
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", cookiesOption)
+    .clearCookie("refreshToken", cookiesOption)
+    .json(new ApiResponse(200, {}, "User logged Out"));
 });
 
 const changeCurrentUserPassword = asyncHandler(async (req, res) => {
@@ -223,7 +224,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullName, email } = req.body;
 
-  if (!fullName && !email) {
+  if (!fullName || !email) {
     throw new ApiError(400, "All fields are required");
   }
 
@@ -337,7 +338,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
           $size: "$subscribedTo",
         },
         isSubscribed: {
-          $count: {
+          $cond: {
             if: { $in: [req.user?._id, "$subscribers.subscriber"] },
             then: true,
             else: false,
@@ -376,7 +377,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {
       $match: {
-        _id: mongoose.Types.ObjectId(req.user._id),
+        _id: new mongoose.Types.ObjectId(req.user._id),
       },
     },
     {

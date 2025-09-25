@@ -26,4 +26,12 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
+// const destoryFromCloudinary = async(url) => {
+//   try {
+//     const publicId = url.split("/").pop().split(".")[0];
+//   } catch (error) {
+    
+//   }
+// }
+
 export { uploadOnCloudinary };

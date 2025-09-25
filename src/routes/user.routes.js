@@ -17,6 +17,7 @@ import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
+// public route
 router.route("/register").post(
   upload.fields([
     { name: "avatar", maxCount: 1 },
@@ -24,14 +25,12 @@ router.route("/register").post(
   ]),
   registerUser
 );
-
-// public route
 router.route("/login").post(loginUser);
 router.route("/refresh-token").post(refreshAccessToken);
 
 // secured route
 router.route("/logout").post(verifyJWT, logoutUser);
-router.route("/change-passwod").post(verifyJWT, changeCurrentUserPassword);
+router.route("/change-password").post(verifyJWT, changeCurrentUserPassword);
 router.route("/current-user").get(verifyJWT, getCurrentUser);
 router.route("/update-account").patch(verifyJWT, updateAccountDetails);
 router
